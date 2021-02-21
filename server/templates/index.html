@@ -9,12 +9,10 @@
     <center><img src="{{ url_for('video_capture') }}" width="1280" height="720"></center>
     
     <center>
-        <form action="/move_camera_right" method="post">
-            <button style="font-family: 'Courier New'; font-size: large;"> ---> </button>    
-        </form>
-        <form action="/move_camera_left" method="post">
-            <button style="font-family: 'Courier New'; font-size: large;"> <--- </button>
-        </form>
+        <a href="/move_camera_left" target="_parent">
+            <button style="font-family: 'Courier New'; font-size: large;"> <--- </button></a>
+        <a href="/move_camera_right" target="_parent">
+            <button style="font-family: 'Courier New'; font-size: large;"> ---> </button></a>
     </center>
     
 </body>

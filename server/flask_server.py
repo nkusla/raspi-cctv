@@ -1,30 +1,21 @@
 from flask import Flask, render_template, Response, url_for, redirect, request
 import io
-import picamera
+from multiprocessing import Process
+import camera as c
 import servo_control as sc
 
 app = Flask(__name__)
 
-def initialize_camera():
-    camera = picamera.PiCamera()
-    camera.rotation = 180
-    camera.resolution = (1280, 720)
+def get_frame():
+    with open("video_capture/frame.jpeg", "rb") as frame:
+        frame_buf = io.BytesIO(frame.read())
 
-    return camera
-
-def get_frame(camera):
-    frame = io.BytesIO()
-    camera.capture(frame, format='jpeg')
-
-    return frame.getvalue()
+    return frame_buf.getvalue()
 
 def send_frame():
-    camera = initialize_camera()
-
     while True:
-        frame = get_frame(camera)
         yield (b'--frame\r\n'
-               b'Content-Type: image/jpeg\r\n\r\n' + frame + b'\r\n')
+                b'Content-Type: image/jpeg\r\n\r\n' + get_frame() + b'\r\n')
 
 @app.route('/')
 def index():
@@ -36,22 +27,24 @@ def video_capture():
 
 @app.route('/move_camera_left', methods=["GET", "POST"])
 def move_camera_left():
-    if request.method == "POST":
+    if request.method == "GET":
         global position
         position = sc.move_servo(position, "left")
-        return redirect('move_camera_left')
-    else:
         return render_template('index.html')
 
 @app.route('/move_camera_right', methods=["GET", "POST"])
 def move_camera_right():
-    if request.method == "POST":
+    if request.method == "GET":
         global position
         position = sc.move_servo(position, "right")
-        return redirect('move_camera_right')
-    else:
         return render_template('index.html')
 
 if __name__ == "__main__":
     position = sc.initialize_servo()
+
+    camera_process = Process(target=c.start_frame_capture)
+
+    camera_process.start()
     app.run(host = '0.0.0.0', debug=True)
+
+    camera_process.join()
